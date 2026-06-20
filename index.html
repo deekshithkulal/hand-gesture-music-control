@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Gestonix — Loading</title>
+
+<style>
+*{
+  margin:0;/*removes all side white space*/
+  padding:0;
+  font-family: Poppins, sans-serif;
+}
+
+body{
+  height:100vh;                    
+  display:flex;                 
+  justify-content:center;           
+  align-items:center;              
+  background:linear-gradient(-45deg,#0a0a0a,#003366,#3399ff,#66ccff);
+  background-size:400% 400%;
+  animation:bg 12s infinite;       
+}
+
+@keyframes bg{
+  0%{background-position:0% 50%}
+  50%{background-position:100% 50%}
+  100%{background-position:0% 50%}
+}
+
+.intro{
+  text-align:center;
+}
+
+.logo-img{
+  width:120px;
+  height:120px;
+  border-radius:50%;              
+  object-fit:cover;             
+  box-shadow:0 0 20px #00aaff;     
+  animation:fade 1.8s ease forwards;
+}
+
+.logo-text{
+  margin-top:12px;
+  font-size:40px;
+  font-weight:700;
+  color:#66cfff;
+  animation:fade 2s ease forwards;
+}
+
+
+@keyframes fade{
+  from{
+    opacity:0;
+    transform:scale(.9);
+  }
+  to{
+    opacity:1;/*full visible logo*/
+    transform:scale(1);
+  }
+}
+</style>
+</head>
+
+<body>
+<div class="intro">
+  <img src="image/logo.jpg" class="logo-img" alt="Gestonix Logo">
+  <div class="logo-text">Gestonix</div>
+</div>
+
+<script type="module">
+import { initializeApp } 
+from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+
+import { getAuth, onAuthStateChanged } 
+from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAzcLKYLn_K6nHsgfHdjfnHWInhHbwvGHA",
+  authDomain: "gestonix-dd8ae.firebaseapp.com",
+  projectId: "gestonix-dd8ae",
+  storageBucket: "gestonix-dd8ae.firebasestorage.app",
+  messagingSenderId: "536766436923",
+  appId: "1:536766436923:web:945f6c5f7b9ed6b1f56e1e"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    setTimeout(() => {
+      window.location.href = "home.html";
+    }, 2500);
+  } else {
+    setTimeout(() => {
+      window.location.href = "land.html";
+    }, 2500);
+  }
+});
+</script>
+</body>
+</html>

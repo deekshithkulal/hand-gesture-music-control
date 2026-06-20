@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Gestronix Login / Signup</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * { box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+    html, body {
+      display: grid;
+      height: 100%;
+      width: 100%;
+      place-items: center;
+      background: linear-gradient(-45deg, #0a0a0a, #003366, #3399ff, #66ccff);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+      color: #fff;
+      
+    }
+    @keyframes gradientBG { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+
+    .wrapper {
+  overflow: hidden;
+  max-width: 360px;   
+  min-height: 520px;     
+  background: rgba(0,0,0,0.75);
+  padding: 30px 25px;    
+  box-shadow: 0 10px 35px rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,255,255,0.2);
+  position: relative;
+  transition: height 0.4s ease;
+  border-radius: 15px;
+}
+    .wrapper .title-text { display:flex; width:200%; }
+  .wrapper .title { width:50%; font-size:22px; font-weight:600; text-align:center; color:#66cfff; text-shadow:0 0 6px #3399ff; transition: all 0.6s cubic-bezier(0.68,-0.55,0.265,1.55); }
+
+    .wrapper .slide-controls {
+      position:relative;
+      display:flex;
+      height:40px;
+      width:100%;
+      overflow:hidden;
+      margin:25px 0 15px 0;
+      justify-content:space-between;
+      border-radius:15px;
+      border:1px solid rgba(255,255,255,0.3);
+    }
+    .slide-controls .slide {
+      height:100%;
+      width:100%;
+      color:#fff;
+      font-size:13px;
+      font-weight:500;
+      text-align:center;
+      line-height:38px;
+      cursor:pointer;
+      z-index:1;
+      transition: all 0.6s ease;
+    }
+    .slider-tab {
+      position:absolute;
+      height:100%;
+      width:50%;
+      left:0;
+      z-index:0;
+      border-radius:15px;
+      background: linear-gradient(90deg,#3399ff,#0073e6);
+      transition: all 0.6s cubic-bezier(0.68,-0.55,0.265,1.55);
+    }
+
+    input[type="radio"] { display:none; }
+    #signup:checked ~ .slider-tab { left:50%; }
+    #signup:checked ~ label.signup { color:#fff; cursor:default; }
+    #login:checked ~ label.login { color:#fff; cursor:default; }
+
+    .form-container { width:100%; overflow:hidden; }
+    .form-inner { display:flex; width:200%; transition: all 0.6s cubic-bezier(0.68,-0.55,0.265,1.55); }
+    .form-inner form { width:50%; padding:0 15px; position:relative; display:flex; flex-direction:column; justify-content:center;height:100%; }
+
+    .form-inner form .field { margin-top:12px; position:relative; }
+    .form-inner form .field input {
+      width:100%;
+      padding:10px 12px;
+      border-radius:20px;
+      border:1px solid rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.05);
+      color:#fff;
+      font-size:14px;
+      outline:none;
+      transition: all 0.3s ease;
+    }
+    .form-inner form .field input::placeholder { color:#cce6ff; }
+    .form-inner form .field input:focus { border-color:#3399ff; }
+
+    .form-inner form .pass-link a,
+    .form-inner form .signup-link a { color:#66cfff; text-decoration:none; }
+    .form-inner form .pass-link a:hover,
+    .form-inner form .signup-link a:hover { text-decoration:underline; }
+
+    .btn { position:relative; overflow:hidden; border-radius:25px; margin-top:15px; }
+    .btn-layer { height:100%; width:300%; position:absolute; left:-100%; background: linear-gradient(90deg,#3399ff,#0073e6); border-radius:25px; transition: all 0.4s ease; }
+    .btn:hover .btn-layer { left:0; }
+    .btn input[type="submit"] { width:100%; padding:10px 0; position:relative; background:none; border:none; color:#fff; font-size:14px; font-weight:600; cursor:pointer; border-radius:25px; }
+
+    .toggle-password { position:absolute; right:15px; top:50%; transform:translateY(-50%); cursor:pointer; color:#66cfff; }
+
+    .social-login {
+  margin-top: 15px;
+  text-align: center;
+}
+
+.social-login p {
+  font-size: 12px;
+  color: #cce6ff;
+  margin-bottom: 10px;
+}
+
+.social-btn {
+  width: 100%;
+  padding: 10px 15px;
+  border-radius: 20px;
+  border: none;
+  background: #fff;
+  color: #444;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+/* Google specific */
+.google-btn:hover {
+  background: #f1f1f1;
+}
+
+.social-btn img {
+  width: 16px;
+  height: 16px;
+}
+    .welcome-overlay {
+      position:fixed;
+      top:0;
+      left:0;
+      width:100%;
+      height:100%;
+      background:rgba(0,0,0,0.85);
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      color:#fff;
+      font-size:24px;
+      z-index:9999;
+      flex-direction:column;
+      display:none;
+    }
+    .welcome-overlay button {
+      margin-top:20px;
+      padding:10px 20px;
+      border:none;
+      border-radius:20px;
+      background: linear-gradient(90deg,#3399ff,#0073e6);
+      color:#fff;
+      cursor:pointer;
+    }
+
+    .error-msg { color:#ff6666; font-size:12px; margin-top:5px; display:none; }
+    .forgot-msg { color:#66ff66; font-size:12px; margin-top:5px; display:none; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="title-text">
+      <div class="title login">Login Form</div>
+      <div class="title signup">Signup Form</div>
+    </div>
+    <div class="form-container">
+      <div class="slide-controls">
+        <input type="radio" name="slide" id="login" checked>
+        <input type="radio" name="slide" id="signup">
+        <label for="login" class="slide login">Login</label>
+        <label for="signup" class="slide signup">Signup</label>
+        <div class="slider-tab"></div>
+      </div>
+      <div class="form-inner">
+        <!-- Login Form -->
+        <form class="login">
+          <div class="field"><input type="email" name="email" placeholder="Email Address" required></div>
+          <div class="field">
+            <input type="password" name="password" placeholder="Password" required>
+            <i class="fa-solid fa-eye-slash toggle-password"></i>
+          </div>
+          <div class="error-msg"></div>
+          <div class="pass-link"><a href="#" id="forgotLink">Forgot password?</a></div>
+          <div class="forgot-msg"></div>
+          <div class="field btn"><div class="btn-layer"></div><input type="submit" value="Login"></div>
+          <div class="signup-link">Create an account <a href="#">Signup now</a></div>
+        </form>
+
+        <!-- Signup Form -->
+        <form class="signup">
+          <div class="field"><input type="text" name="name" placeholder="Name" required></div>
+          <div class="field"><input type="email" name="email" placeholder="Email Address" required></div>
+          <div class="field">
+            <input type="password" name="password" placeholder="Password" required>
+            <i class="fa-solid fa-eye-slash toggle-password"></i>
+          </div>
+          <div class="field btn"><div class="btn-layer"></div><input type="submit" value="Signup"></div>
+          <div class="signup-link">Already have an account? <a href="#">Login</a></div>
+          <div class="social-login">
+            <p>Or continue with</p>
+            
+              <button type="button" class="social-btn google-btn">
+  <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/google.svg" alt="Google">
+  Google
+</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="welcome-overlay" id="welcomeOverlay">
+    <div id="welcomeText"></div>
+    <button onclick="hideWelcome()">Continue</button>
+  </div>
+
+<script type="module">
+  import { initializeApp }
+  from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+  import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithPopup,
+  sendPasswordResetEmail,
+  getAdditionalUserInfo,
+  setPersistence,
+browserLocalPersistence
+} from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+
+
+// Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyAzcLKYLn_K6nHsgfHdjfnHWInhHbwvGHA",
+  authDomain: "gestonix-dd8ae.firebaseapp.com",
+  projectId: "gestonix-dd8ae",
+  storageBucket: "gestonix-dd8ae.firebasestorage.app",
+  messagingSenderId: "536766436923",
+  appId: "1:536766436923:web:945f6c5f7b9ed6b1f56e1e"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+setPersistence(auth, browserLocalPersistence);
+
+// DOM elements
+const signupForm = document.querySelector("form.signup");
+const loginForm = document.querySelector("form.login");
+const loginText = document.querySelector(".title-text .login");
+const loginBtn = document.querySelector("label.login");
+const signupBtn = document.querySelector("label.signup");
+const signupLink = document.querySelector("form.login .signup-link a");
+const loginLinkInSignup = document.querySelector("form.signup .signup-link a");
+const wrapper = document.querySelector('.wrapper');
+const forgotMsg = loginForm.querySelector('.forgot-msg');
+const forgotLink = document.getElementById('forgotLink');
+
+function showWelcome(name = "Welcome!") {
+  const overlay = document.getElementById("welcomeOverlay");
+  const text = document.getElementById("welcomeText");
+
+  text.textContent = `Welcome, ${name} 🎉`;
+  overlay.style.display = "flex";
+
+  // auto redirect after 5 seconds
+  setTimeout(() => {
+    window.location.href = "info.html";
+  }, 3000);
+}
+
+document.querySelectorAll('.toggle-password').forEach(icon => {
+  icon.addEventListener('click', function() {
+    const input = this.parentElement.querySelector('input');
+    if(input.type === "password") {
+      input.type = "text";
+      this.classList.replace("fa-eye-slash","fa-eye");
+    } else {
+      input.type = "password";
+      this.classList.replace("fa-eye","fa-eye-slash");
+    }
+  });
+});
+
+// Show login/signup
+function showLogin() { loginForm.style.marginLeft = "0%"; loginText.style.marginLeft = "0%"; adjustWrapperHeight(loginForm); }
+function showSignup() { loginForm.style.marginLeft = "-50%"; loginText.style.marginLeft = "-50%"; adjustWrapperHeight(signupForm); }
+loginBtn.onclick = showLogin;
+signupBtn.onclick = showSignup;
+signupLink.onclick = () => { showSignup(); return false; };
+loginLinkInSignup.onclick = () => { showLogin(); return false; };
+function adjustWrapperHeight(form) {
+  const formHeight = form.scrollHeight;
+  wrapper.style.height = (formHeight + 80) + "px"; 
+}
+
+// Signup
+signupForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const email = signupForm.email.value;
+  const password = signupForm.password.value;
+  const name = signupForm.name.value;
+
+  createUserWithEmailAndPassword(auth, email, password)
+    .then(() => {
+      showWelcome(name);
+    })
+    .catch(err => {
+      if (err.code === "auth/email-already-in-use") {
+        alert("Email already registered. Please login.");
+        showLogin();
+      } else {
+        alert(err.message);
+      }
+    });
+});
+
+// Email/password login (REQUIRED)
+loginForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+
+  const email = loginForm.email.value;
+  const password = loginForm.password.value;
+  const errorBox = loginForm.querySelector(".error-msg");
+
+  signInWithEmailAndPassword(auth, email, password)
+    .then(() => {
+      window.location.href = "home.html";
+    })
+    .catch((err) => {
+  if (err.code === "auth/user-not-found") {
+    errorBox.textContent = "No account found with this email.";
+  } else if (err.code === "auth/wrong-password" || err.code === "auth/invalid-credential") {
+    errorBox.textContent = "Incorrect email or password.";
+  } else {
+    errorBox.textContent = "Login failed. Please try again.";
+  }
+  errorBox.style.display = "block";
+});
+});
+
+// Google login
+const provider = new GoogleAuthProvider();
+provider.setCustomParameters({ prompt: "select_account" });
+
+document.querySelector(".google-btn").addEventListener("click", () => {
+  signInWithPopup(auth, provider)
+    .then((result) => {
+      const info = getAdditionalUserInfo(result);
+
+      if (info?.isNewUser) {
+        showWelcome(result.user.displayName || "User");
+      } else {
+        window.location.href = "home.html";
+      }
+    })
+    .catch((error) => {
+      console.error(error);
+      alert(error.code + " : " + error.message);
+    });
+});
+
+
+// Forgot password
+forgotLink.addEventListener('click', async (e) => {
+  e.preventDefault();
+
+  const email = loginForm.email.value.trim().toLowerCase();
+
+  if (!email) {
+    forgotMsg.style.color = "#ff6666";
+    forgotMsg.textContent = "Enter your email address to reset password.";
+    forgotMsg.style.display = "block";
+    return;
+  }
+
+  try {
+    await sendPasswordResetEmail(auth, email);
+
+    //  message OF WRONG PASS
+    forgotMsg.style.color = "#66ff66";
+    forgotMsg.textContent = `Password reset link sent to ${email}. Check your inbox.`;
+    forgotMsg.style.display = "block";
+
+  } catch (err) {
+    if (err.code === "auth/user-not-found") {
+      forgotMsg.style.color = "#ff6666";
+      forgotMsg.textContent = "No account found with this email.";
+    } else {
+      forgotMsg.style.color = "#ff6666";
+      forgotMsg.textContent = "Something went wrong. Try again.";
+    }
+    forgotMsg.style.display = "block";
+  }
+});
+
+function hideWelcome(){ document.getElementById('welcomeOverlay').style.display='none'; window.location.href="info.html"; }
+
+</script>
+</body>
+</html>

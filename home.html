@@ -1,0 +1,2188 @@
+<!doctype html>
+<html lang="en">
+  <head>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Gestonix — Full Dashboard</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+<style>
+:root {
+  --accent: #00bfff;    
+  --accent-glow: rgba(0,191,255,0.4); 
+  --neon: #00bfff;           
+  --neon-strong: rgba(0,191,255,0.4);
+  --bg: #00111a;              
+  --panel: rgba(0,44,77,0.3); 
+  --rounded: 18px;            
+  --sidebar-w: 220px;         
+  --font-main: 'Poppins', sans-serif;
+  --shadow-soft: 0 12px 50px rgba(0,140,220,0.25); 
+}
+/* Reset */
+*{box-sizing:border-box; margin:0; padding:0;}
+body {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--bg);
+  color: #fff;
+  font-family: var(--font-main);
+}
+
+.sidebar{
+  width: var(--sidebar-w);
+  background: linear-gradient(180deg, rgba(0,51,102,0.5), rgba(0,102,170,0.3));
+  backdrop-filter: blur(8px) saturate(120%);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-radius: var(--rounded);
+  transition: width 0.3s ease, padding 0.3s ease;
+  position: relative;
+}
+
+.sidebar.collapsed{
+  width: 60px;
+  padding: 20px 10px;
+}
+
+.sidebar-logo{
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  border: 2px solid var(--accent);
+  padding: 2px;
+  transition: all 0.3s ease;
+}
+
+.sidebar h2{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 22px;
+  color: var(--accent);
+  margin-bottom: 20px;
+  transition: opacity 0.3s ease;
+}
+
+.sidebar.collapsed h2 span{opacity:0; pointer-events:none;}
+
+.sidebar a{
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  color: #fff;
+  text-decoration: none;
+  border-radius: var(--rounded);
+  transition: 0.3s;
+  font-size: 15px;
+}
+
+.sidebar a i {
+  margin-right: 12px;
+  color: var(--accent);
+}
+
+.sidebar a:hover{
+  background: rgba(0,191,255,0.1);
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+
+.sidebar.collapsed a span,
+.sidebar.collapsed h2 span,
+.sidebar.collapsed h3 span {
+  display: none;
+}
+
+.toggle-btn{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 50px;
+  margin-bottom: 15px;
+  transition: all 0.3s;
+}
+
+.toggle-btn:hover{
+  background: rgba(0,191,255,0.2);
+}
+
+.gesture-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: var(--rounded);
+  cursor: pointer;
+  transition: 0.3s;
+  background: rgba(255,255,255,0.05);
+  margin-top: 10px;
+}
+
+.gesture-toggle:hover {
+  background: rgba(0,191,255,0.1);
+}
+
+.gesture-left i {
+  color: #fff;
+  font-size: 18px;
+  margin-right: 10px;
+  transition: color 0.3s;
+}
+
+.gesture-left span {
+  font-size: 16px;
+  font-weight: 500;
+  text-align: center;
+  color: #fff;
+}
+
+.gesture-switch {
+  width: 40px;
+  height: 20px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 20px;
+  position: relative;
+  transition: 0.3s;
+}
+
+.gesture-switch.active {
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+
+.toggle-circle {
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  transition: 0.3s;
+}
+
+.gesture-switch.active .toggle-circle {
+  left: 22px;
+}
+
+.sidebar.collapsed .gesture-left span,
+.sidebar.collapsed .gesture-switch{ display: none; }
+
+/* MAIN LAYOUT */
+.main{
+  flex:1; 
+  display:grid; 
+  grid-template-columns: 1fr; 
+  gap:20px; 
+  padding:20px; 
+  align-items:start; 
+  transition:all 0.2s;
+}
+.song-cards{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 160px)); 
+  justify-content: start; 
+  gap:20px;
+  margin-top: 10px;
+}
+
+.card{
+  padding:8px; 
+  border-radius:var(--rounded); 
+  cursor:pointer; 
+  border:1px solid rgba(0,170,255,0.08); 
+  transition:all 0.18s; 
+  display:flex; 
+  flex-direction:column;
+  width:160px;
+}
+.card img{
+  width:100%; 
+  height:160px; 
+  object-fit:cover; 
+  border-radius:12px; 
+  margin-bottom:8px;
+}
+
+.card:hover{
+  transform:translateY(-6px); 
+  box-shadow:var(--shadow-soft);
+}
+.card h4{
+  margin:0; 
+  font-size:12px;
+  color:#dff8ff; 
+  text-align:center;
+}
+
+.video-area {
+  position: fixed;
+  right: 18px;
+  top: 55px;
+  width: 320px;
+  height: 200px;
+  background: #05060a;
+  border-radius: 16px;
+
+  /* Neon Blue Border */
+  border: 2px solid rgba(0, 191, 255, 0.9);
+  box-shadow:
+      0 0 12px rgba(0, 191, 255, 0.7),
+      0 0 22px rgba(0, 191, 255, 0.3),
+      0 0 44px rgba(0, 191, 255, 0.25);
+
+  overflow: hidden;
+  z-index: 60;
+
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.video-area.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.video-area.hidden{display:none;}
+video.input_video{
+  position:absolute; 
+  left:50%; top:50%; 
+  transform:translate(-50%,-50%); 
+  width:100%; 
+  height:100%;
+  object-fit:cover; 
+  opacity:0.14; 
+  transition:opacity 0.12s,filter 0.12s;
+}
+canvas.output_canvas{
+  position:absolute; left:0; top:0; 
+  pointer-events:none; 
+  width:100%; height:100%;
+}
+.gestureText {
+  position: fixed;
+  right: 18px;
+  top: calc(55px + 200px + 10px); /* under webcam */
+  width: 320px;
+
+  text-align: center;
+  padding: 8px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+
+  /* b and border */
+  background: rgba(0, 0, 0, 0.55);
+  border: 2px solid rgba(0, 191, 255, 0.6);
+
+  /* Neon glow */
+  box-shadow:
+      0 0 12px rgba(0, 191, 255, 0.8),
+      0 0 28px rgba(0, 191, 255, 0.5);
+
+  text-shadow:
+      0 0 6px rgba(0, 191, 255, 0.9),
+      0 0 12px rgba(0, 191, 255, 0.6);
+
+  /* Hidden Default */
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity .35s ease, transform .35s ease;
+
+  z-index: 61;
+}
+
+.gestureText.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+/* RESPONSIVE */
+@media (max-width:1100px){ 
+  .main{grid-template-columns:1fr;} 
+} 
+@media (max-width:900px){
+  .main{grid-template-columns:1fr;}
+  .song-cards{grid-template-columns:1fr;}
+  .video-area{width:260px;height:160px; right:12px; bottom:12px; top:auto;}
+}
+
+.audio-player {
+  position: fixed;
+  bottom: 20px;
+  transform: translateX(-50%);
+  max-width: 600px;
+  width: 90%;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 14px;
+  border: 1px solid rgba(0, 191, 255, 0.6);
+  box-shadow: 0 12px 30px rgba(0, 90, 170, 0.12), 0 4px 12px rgba(0, 90, 170, 0.06);
+  backdrop-filter: blur(18px) saturate(130%);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: fixed;
+  left: calc(230px + (100% - 260px) / 2);
+  z-index: 9999;
+}
+
+.audio-player input[type="range"] {
+  accent-color: #00bfff; 
+}
+
+.audio-player.shifted{left:64px;max-width:calc(100% - 100px);}
+.player-top{display:flex;justify-content:center;}
+.top-pills{display:flex;gap:10px;align-items:center;background: rgba(255,255,255,0.02);padding:8px 12px;border-radius: 10px;}
+.pill-btn{background:transparent;border:none;color:#dff6ff;padding:8px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .14s ease;font-size:18px;}
+.pill-btn:hover{color:#fff;transform: translateY(-2px);}
+.pill-btn.small{font-size:20px;padding:6px;}
+.mini-play-wrap{display:flex;align-items:center;justify-content:center;}
+.mini-play{width:44px;height:44px;border-radius:50%;border:none;background:#fff;color:#003755;display:flex;align-items:center;justify-content:center;cursor:pointer;transition: transform .12s ease;}
+.mini-play:hover{transform:scale(1.03);}
+.player-bottom{display:flex;align-items:center;gap:12px;padding:0 6px;}
+.small-time{font-size:12px;color:#9fdcff;width:44px;text-align:center;}
+.timeline{flex:1;display:flex;align-items:center;}
+.timeline-track{position:relative;width:100%;height:6px;background: rgba(255,255,255,0.06);border-radius:8px;overflow:hidden;}
+.timeline-fill{position:absolute;left:0;top:0;bottom:0;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent-2));transition: width .08s linear;}
+.timeline-handle{position:absolute;top:50%;left:0%;transform:translate(-50%,-50%);width:12px;height:12px;border-radius:50%;background:#fff;box-shadow:0 6px 20px rgba(0,160,255,0.22);cursor:pointer;transition: transform .08s ease;}
+@media(max-width:1000px){.audio-player{left:12px;right:12px;max-width:none;}}
+
+body.camera-open {
+  padding-right: 360px;
+}
+
+body {
+  transition: padding-right 0.35s ease; /* smooth slide animation */
+}
+.video-area {
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.video-area.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+.song-search {
+  width: 400px;
+  display: flex;
+  align-items: center;
+  background: rgba(0, 191, 255, 0.08);
+  border: 1px solid rgba(0, 191, 255, 0.4);
+  border-radius: 14px;
+  padding: 12px 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 0 10px rgba(0,191,255,0.2);
+  transition: 0.25s ease;
+}
+
+.song-search:hover {
+  box-shadow: 0 0 14px rgba(0,191,255,0.35);
+}
+
+.song-search i {
+  color: var(--accent);
+  margin-right: 8px;
+}
+
+.song-search input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  color: #e9faff;
+}
+
+.song-search input::placeholder {
+  color: #9adfff;
+}
+.recently-played-section {
+  margin-bottom: 12px;
+}
+
+.recently-played-section h4 {
+  margin: 0 0 6px 0;
+  font-size: 14px;
+  color: var(--accent);
+}
+
+.recently-played-cards {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto; 
+  padding-bottom: 4px;
+  margin-bottom: 20px;
+  
+}
+
+.recently-played-cards::-webkit-scrollbar {
+  height: 6px;
+}
+
+.recently-played-cards::-webkit-scrollbar-thumb {
+  background: rgba(0,191,255,0.4);
+  border-radius: 3px;
+}
+
+.recently-played-card {
+  min-width: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  border: 1px solid rgba(0,191,255,0.2);
+  border-radius: 12px;
+  padding: 4px;
+  background: rgba(0,0,0,0.1);
+  transition: all 0.15s;
+  flex: 0 0 120px; 
+}
+
+.recently-played-card img {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 4px;
+}
+
+.recently-played-card h5 {
+  font-size: 11px;
+  color: #dff8ff;
+  text-align: center;
+  margin: 0;
+}
+
+.recently-played-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 10px rgba(0,191,255,0.25);
+}
+
+h4 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 15px 0 10px 10px;
+  
+   color: #dff8ff;
+}
+.card {
+  position: relative;
+  overflow: hidden;
+}
+
+.card-play-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: rgba(0,191,255,0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity .25s, transform .25s;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 0 12px rgba(0,191,255,0.6);
+}
+
+.card-play-overlay i {
+  font-size: 20px;
+  color: #00111a;
+}
+
+.card:hover .card-play-overlay {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1.07);
+}
+
+.card-heart {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(0,0,0,0.45);
+  padding: 6px;
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 5;
+  transition: transform .2s ease, background .2s ease;
+}
+
+.card-heart i {
+  color: #fff;
+  font-size: 15px;
+}
+
+.card-heart:hover {
+  transform: scale(1.15);
+  background: rgba(0, 191, 255, 0.4);
+}
+
+#artistCards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 15px;
+  justify-items: center;
+  padding: 10px 0;
+}
+
+.artist-card {
+  background: rgba(0, 0, 0, 0.15); 
+  border-radius: 15px;
+  padding: 10px;
+  width: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.artist-card:hover {
+  transform: translateY(-5px);
+  border-color: var(--accent);
+  box-shadow: 0 8px 15px rgba(0, 170, 255, 0.3);
+}
+
+.artist-card img {
+  width: 100px;
+  height: 100px;       
+  border-radius: 50%; 
+  object-fit: cover;   
+  margin-bottom: 10px;
+  border: 2px solid var(--accent); 
+  transition: transform 0.3s ease;
+}
+
+.artist-card:hover img {
+  transform: scale(1.1); 
+}
+
+.artist-card h4 {
+  font-size: 14px;
+  text-align: center;
+  color: #fff;
+  margin: 0;
+  font-weight: 500;
+  word-break: break-word;
+}
+
+/* Responsive adjustments */
+@media (max-width: 500px) {
+  #artistCards {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  }
+  .artist-card img {
+    width: 80px;
+    height: 80px;
+  }
+  .artist-card h4 {
+    font-size: 12px;
+  }
+}
+.back-button {
+  background: rgb(19, 54, 126);
+  color: #fff;
+  border: none;
+  border-radius: 13px;
+  padding: 6px 12px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.back-button:hover {
+  background: #0f3365;
+}
+.hidden {
+  display: none;
+}
+
+.settings-page {
+  padding: 24px 28px;
+  margin: 5px 0 5px 0; 
+  background: #1a1a1a;
+  border-radius: 0;     
+  box-shadow: none;     
+  color: #eee;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  width: 85%;      
+  max-width: none;
+
+}
+
+.settings-page h2 {
+  text-align: left;     
+  margin-bottom: 20px;
+  font-size: 24px;
+  font-weight: 600;
+  color: #00aaff;
+}
+
+.settings-section {
+  background: #222;
+  border-radius: 8px;
+  padding: 16px 18px;
+  margin-bottom: 16px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.settings-section:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.settings-section h3 {
+  font-size: 16px;
+  margin-bottom: 8px;
+  color: #66ccff;
+}
+
+.settings-section p {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #bbb;
+  margin-top: 4px;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 24px;
+}
+
+.switch input {
+  display: none;
+}
+
+.slider {
+  position: absolute;
+  inset: 0;
+  background: #555;
+  border-radius: 30px;
+  transition: 0.3s;
+}
+
+.slider::before {
+  content: "";
+  position: absolute;
+  height: 20px;
+  width: 20px;
+  left: 2px;
+  bottom: 2px;
+  background: #fff;
+  border-radius: 50%;
+  transition: 0.3s;
+}
+
+.switch input:checked + .slider {
+  background: #00aaff;
+}
+
+.switch input:checked + .slider::before {
+  transform: translateX(26px);
+}
+
+/*theme*/
+.settings-section label {
+  font-size: 14px;
+  cursor: pointer;
+  margin-right: 12px;
+}
+
+.settings-section input[type="radio"] {
+  margin-right: 6px;
+  accent-color: #00aaff;
+}
+
+/*ABOUT */
+.settings-section:last-child p {
+  font-size: 13px;
+  color: #aaa;
+  margin: 4px 0;
+}
+
+body.light-theme .main,
+body.light-theme .settings-page {
+  background:white;
+  color: #f8f4f4;
+}
+
+body.light-theme .settings-section,
+body.light-theme .card {
+  background:black;
+  color: #111;
+}
+
+body.light-theme h2,
+body.light-theme h3,
+body.light-theme h4 {
+  color: #0066aa;
+}
+
+.mini-progress {
+  width: 100%;
+  height: 4px;
+  background: rgba(255,255,255,0.15);
+  position: relative;
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+#miniProgressFill {
+  height: 100%;
+  width: 0%;
+  background: #00aaff;
+  transition: width 0.1s linear;
+}
+
+#miniHandle {
+  position: absolute;
+  top: 50%;
+  left: 0%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ecf0f2;
+}
+#repeatBtn.active {
+  color: var(--neon);
+  transform: scale(1.1);
+}
+</style>
+</head>
+
+<body>
+
+  <div class="sidebar" id="sidebar">
+  <div class="toggle-btn" onclick="toggleSidebar()"><i class="fa fa-bars"></i></div>
+  
+  <h2><img src="image/logo.jpg" alt="Gestonix Logo" class="sidebar-logo"><span>Gestonix</span></h2>
+  
+ <nav>
+  <a href="#" id="homeLink"><i class="fa fa-house"></i><span> Home</span></a>
+  <a href="#" id="artistLink"><i class="fa fa-music"></i><span> Artists</span></a>
+  <a href="#" id="favoriteLink"><i class="fa fa-heart"></i><span> Favorites</span></a>
+  <a href="#" id="settingsLink"><i class="fa fa-sliders"></i><span> Settings</span></a>
+ </nav>
+
+
+  <div id="gestureToggle" class="gesture-toggle">
+    <div class="gesture-left">
+      <i class="fa fa-hand-paper" id="gestureIcon"></i>
+      <span>Hand <br> Gesture</span>
+    </div>
+    <div class="gesture-switch" id="gestureSwitch" aria-checked="false" role="switch" tabindex="0">
+      <div class="toggle-circle"></div>
+    </div>
+  </div>
+
+  <div id="voiceToggle" class="gesture-toggle">
+  <div class="gesture-left">
+    <i class="fa fa-microphone" id="voiceIcon"></i>
+    <span>Voice <br> Control</span>
+  </div>
+  <div class="gesture-switch" id="voiceSwitch" aria-checked="false" role="switch" tabindex="0">
+    <div class="toggle-circle"></div>
+  </div>
+</div>
+
+<a href="#" id="logoutBtn">
+  <i class="fa fa-sign-out-alt"></i><span> Logout</span>
+</a>
+
+</div>
+  <main class="main" id="mainGrid">
+  
+    <section class="left-col">
+      <h3 style="margin:0 0 10px 0;color:var(--neon)">Songs</h3>
+      <div class="song-search">
+    <i class="fa fa-search"></i>
+    <input type="text" id="songSearchInput" placeholder="Search songs...">
+  </div>
+ <div class="recently-played-section">
+  <h4>Recently Played</h4>
+  <div class="recently-played-cards" id="recentlyPlayedCards"></div>
+</div>
+
+</div>
+<h4>Main Songs</h4> 
+      <div class="song-cards" id="songCards">
+    </section>
+    </main>
+
+<div id="settingsPage" class="settings-page hidden">
+  <h2>Settings</h2>
+
+  <!-- Gesture Control -->
+  <div class="settings-section">
+    <h3>Gesture Control</h3>
+<label class="switch">
+  <input type="checkbox" id="settingsGestureToggle">
+  <span class="slider"></span>
+</label>
+
+    <p>Use hand gestures to play, pause, skip songs, or adjust volume.  
+       Example:🖐️ Play, ✊ Pause, ✌️ Volume Up, ☝️Volume Down, 🤘next song, pinky sign-previous song</p>
+  </div>
+
+  <div class="settings-section">
+    <h3>Voice Control</h3>
+    <label class="switch">
+      <input type="checkbox" id="settingsVoiceToggle">
+      <span class="slider"></span>
+    </label>
+    <p>Control the player with voice commands. Example: "Play", "Stop/pause", "Next", "Previous/Back", "Volume up/Up","Volume down/Down".</p>
+  </div>
+
+  <!-- Theme -->
+  <div class="settings-section">
+    <h3>Theme</h3>
+    <label><input type="radio" name="theme" value="light" checked> Light</label>
+    <label><input type="radio" name="theme" value="dark"> Dark</label>
+  </div>
+
+  <!-- Information -->
+<div class="settings-section">
+  <h3>Information</h3>
+  <ul>
+    <li> Hand gestures work best when your hand is clearly visible within normal camera range.</li>
+    <li>Hand gesture detection works best within 40–50 cm from the camera.</li>
+    <li> This app provides smooth music streaming with fast controls and minimal delay.</li>
+    <li> All features are designed for quick access and easy user experience.</li>
+  </ul>
+</div>
+ 
+  <div class="settings-section">
+    <h3>App Version / About</h3>
+    <p>Version: 1.0.0</p>
+    <p>Developed by: Team GX</p>
+  </div>
+</div>
+    
+ <div class="video-area" id="videoBox">
+    <video class="input_video" autoplay muted playsinline></video>
+    <canvas class="output_canvas"></canvas>
+</div>
+
+<div class="gestureText" id="gestureText">Gesture: Off</div>
+
+
+  <audio id="player" src="" preload="metadata"></audio>
+<div class="audio-player" id="audioPlayerUI">
+  <div class="player-top">
+    <div class="top-pills">
+      <button class="pill-btn" id="favBtn" title="Like"><i class="far fa-heart"></i></button>
+      <button class="pill-btn small" id="miniPrev" title="Previous"><i class="fa fa-backward"></i></button>
+      <div class="mini-play-wrap">
+        <button class="mini-play" id="miniPlay" title="Play/Pause">
+          <i class="fa fa-play" id="miniPlayIcon"></i>
+        </button>
+      </div>
+      <button class="pill-btn small" id="miniNext" title="Next"><i class="fa fa-forward"></i></button>
+      <button class="pill-btn" id="repeatBtn" title="Repeat"><i class="fa fa-repeat"></i></button>
+      <div class="pill-volume" title="Volume">
+        <i class="fa fa-volume-up"></i>
+        <input id="miniVolume" type="range" min="0" max="1" step="0.01" value="1">
+      </div>
+    </div>
+  </div>
+  <div class="player-bottom">
+    <div class="time small-time" id="miniCurrent">0:00</div>
+    <div class="timeline" id="miniProgressContainer" aria-label="Audio timeline">
+      <div class="timeline-track" id="miniProgressBar">
+        <div class="timeline-fill" id="miniProgressFill"></div>
+        <div class="timeline-handle" id="miniHandle" role="slider" tabindex="0" aria-valuemin="0" aria-valuemax="100"></div>
+      </div>
+    </div>
+    <div class="time small-time" id="miniTotal">0:00</div>
+  </div>
+</div>
+
+<script>
+
+const songsData = [
+  { title:"KAKIG BANNA KAANTHA", artist:"SHREYA GHOSHAL", src:"songs/Shreya goshal1.mp3", img:"image/i1.jpg" },
+  { title:"MOONLIGHT", artist:"XXXTENTACION", src:"songs/song2.m4a", img:"image/image2.jpg" },
+   { title:"HOPE", artist:"XXXTENTACION", src:"songs/HOPE.mp3", img:"image/i2.jpg" },
+  { title:"KAVITHE KAVITHE", artist:"VIJAY PRAKESH", src:"songs/Vijay Prakash1.mp3 ", img:"image/i3.jpg" },
+  { title:"SAANS ME TERI", artist:"SHREYA GHOSHAL", src:"songs/Shreya goshal2.mp3", img:"image/i4.jpg" },
+  { title:"TULSI", artist:"SUMEDH K", src:" songs/TULSI.mp3", img:"image/ii5.jpg" },
+  { title:"DIL KO KARRAR AAYA", artist:"NEHA KAKKAR", src:"songs/DIL.mp3", img:"image/i6.jpg" },
+ { title:"GATIYA ILIDU", artist:"VIJAY PRAKESH", src:"songs/Vijay Prakash.mp3", img:"image/i7.jpeg" },
+   { title:"HEERIYE", artist:"ARIJIT SINGH", src:"songs/Arijit Singh1.mp3", img:"image/i8.jpeg" },
+      { title:"HUM TERE BIN AB REH NAHI SAKTI", artist:"ARIJIT SINGH", src:"songs/arijit Singh.mp3", img:"image/i9.jpg" },
+            { title:"SWEATER WEATHER", artist:"NEIGHBOURHOOD", src:"songs/song5.m4a", img:"image/IMAGE5.jpg" },
+              { title:"DILAR DILBAR", artist:"NEHA KAKKAR", src:"songs/dilbar.mp3", img:"image/i99.jpg" },
+                { title:"OBBANE", artist:"RAHUL DIT-O", src:"songs/dd.mpeg", img:"image/i88.jpeg" },
+];
+const artistImages = {
+  "SHREYA GHOSHAL": "artists/5.jpeg",
+  "XXXTENTACION": "artists/3.jpeg",
+  "VIJAY PRAKESH": "artists/4.jpeg",
+  "SUMEDH K": "artists/1.jpeg",
+  "NEHA KAKKAR": "artists/6.jpeg",
+  "ARIJIT SINGH": "artists/2.jpeg",
+  "NEIGHBOURHOOD": "artists/vevo.jpg",
+  "RAHUL DIT-O": "artists/8.jpg"
+};
+
+// LOGOUT popup code
+logoutBtn.addEventListener("click", (e) => {
+  e.preventDefault(); 
+  const confirmLogout = confirm("Are you sure you want to logout?");
+  if (confirmLogout) {
+    window.location.href = "login.html";
+  }
+});
+
+const player = document.getElementById('player');
+const favBtn = document.getElementById("favBtn");
+const miniPlay = document.getElementById('miniPlay');
+const miniPlayIcon = document.getElementById('miniPlayIcon');
+const miniPrev = document.getElementById('miniPrev');
+const miniNext = document.getElementById('miniNext');
+const miniCurrent = document.getElementById('miniCurrent');
+const miniTotal = document.getElementById('miniTotal');
+const miniProgressFill = document.getElementById('miniProgressFill');
+const miniHandle = document.getElementById('miniHandle');
+const miniProgressContainer = document.getElementById("miniProgressContainer");
+let isSeeking = false;
+let currentIndex = 0;
+let favorites = [];
+window.favorites = favorites;
+
+function isFavorite(song) {
+  return favorites.some(f => f.src === song.src);
+}
+
+function updateMiniPlayerHeart() {
+  const song = songsData[currentIndex];
+  if (!song) return;
+
+  const favBtn = document.getElementById("favBtn");
+
+  if (isFavorite(song)) {
+    favBtn.innerHTML = `<i class="fa-solid fa-heart"></i>`;
+  } else {
+    favBtn.innerHTML = `<i class="fa-regular fa-heart"></i>`;
+  }
+
+  document.querySelectorAll('.card').forEach((card, i) => {
+    const heart = card.querySelector('.card-heart');
+    if (!heart) return;
+    const cardSong = songsData[card.dataset.index];
+    if (!cardSong) return;
+    if (isFavorite(cardSong)) {
+      heart.innerHTML = `<i class="fa-solid fa-heart"></i>`;
+    } else {
+      heart.innerHTML = `<i class="fa-regular fa-heart"></i>`;
+    }
+  });
+}
+
+let volume = 0.5;
+const miniVolume = document.getElementById('miniVolume');
+miniVolume.value = volume; // set initial slider value
+
+miniVolume.addEventListener('input', (e) => {
+  volume = parseFloat(e.target.value);
+  player.volume = volume;
+});
+player.volume = volume;
+
+
+// populate card images and click behavior
+document.querySelectorAll('.card').forEach((card, idx) => {
+  const img = card.querySelector('img');
+  if (songsData[idx] && img) img.src = songsData[idx].img || '';
+  card.addEventListener('click', () => { loadSong(idx); player.play(); });
+});
+
+
+// ADD PLAY OVERLAY TO EACH CARD 
+document.querySelectorAll('.card').forEach((card, idx) => {
+  const overlay = document.createElement('div');
+  overlay.className = "card-play-overlay";
+  overlay.innerHTML = `<i class="fa fa-play"></i>`;
+  card.appendChild(overlay);
+
+  overlay.addEventListener('click', (e) => {
+    e.stopPropagation();
+    loadSong(idx);
+    player.play();
+  });
+});
+
+document.querySelectorAll('.card').forEach((card, idx) => {
+  const heart = document.createElement('div');
+  heart.className = "card-heart";
+  const song = songsData[idx];
+
+  if (favorites.find(f => f.src === song.src)) {
+    heart.innerHTML = `<i class="fa-solid fa-heart"></i>`;
+  } else {
+    heart.innerHTML = `<i class="fa-regular fa-heart"></i>`;
+  }
+
+  card.appendChild(heart);
+
+  heart.addEventListener("click", async (e) => {
+    e.stopPropagation();
+
+    if (favorites.find(f => f.src === song.src)) {
+      favorites = favorites.filter(f => f.src !== song.src);
+      heart.innerHTML = `<i class="fa-regular fa-heart"></i>`;
+    } else {
+      favorites.push(song);
+      heart.innerHTML = `<i class="fa-solid fa-heart"></i>`;
+    }
+
+    updateMiniPlayerHeart();
+
+    const user = window.auth?.currentUser;
+    if (user) {
+      await saveFavorites(user.uid);
+    }
+  });
+}); 
+
+function loadSong(index, addToRecent = true){
+  currentIndex = (index + songsData.length) % songsData.length;
+  const song = songsData[currentIndex];
+  player.src = song.src;
+
+    
+  if (addToRecent) {
+    addToRecentlyPlayed(currentIndex);
+  }
+
+  // Reset current time immediately
+  miniCurrent.textContent = '0:00';
+  miniProgressFill.style.width = '0%';
+
+  player.addEventListener('loadedmetadata', function onMeta(){
+    miniTotal.textContent = formatTime(player.duration);
+    player.play();
+    player.removeEventListener('loadedmetadata', onMeta); // remove listener after first run
+  });
+  updateMiniPlayerHeart();
+
+  // Highlight active card
+  document.querySelectorAll('.card').forEach((card,i)=>{
+    card.style.borderColor = (i===currentIndex)?'var(--accent)':'rgba(0,170,255,0.08)';
+  });
+}
+
+function showMainPage() {
+  const main = document.getElementById("mainGrid");
+
+  // Clear current content
+  main.innerHTML = `
+    <section class="left-col">
+      <h3 style="margin:0 0 10px 0;color:var(--neon)">Songs</h3>
+      <div class="song-search">
+        <i class="fa fa-search"></i>
+        <input type="text" id="songSearchInput" placeholder="Search songs...">
+      </div>
+      <div class="recently-played-section">
+        <h4>Recently Played</h4>
+        <div class="recently-played-cards" id="recentlyPlayedCards"></div>
+      </div>
+      <h4>Main Songs</h4>
+      <div class="song-cards" id="songCards"></div>
+    </section>
+  `;
+  
+  const songCardsContainer = document.getElementById("songCards");
+  songsData.forEach((song, idx) => {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.dataset.index = idx;
+    card.innerHTML = `<img src="${song.img}" alt=""><h4>${song.title} — ${song.artist}</h4>`;
+    
+    // Play overlay
+    const overlay = document.createElement("div");
+    overlay.className = "card-play-overlay";
+    overlay.innerHTML = `<i class="fa fa-play"></i>`;
+    card.appendChild(overlay);
+    overlay.addEventListener("click", e => { e.stopPropagation(); loadSong(idx); });
+
+// Heart button
+const heart = document.createElement("div");
+heart.className = "card-heart";
+
+// Check if song is in favorites
+if (favorites.find(f => f.src === song.src)) {
+  heart.innerHTML = `<i class="fa-solid fa-heart"></i>`;
+} else {
+  heart.innerHTML = `<i class="fa-regular fa-heart"></i>`;
+}
+card.appendChild(heart);
+
+// Heart click event
+heart.addEventListener("click", async (e) => {
+  e.stopPropagation();
+  const alreadyLiked = favorites.find(f => f.src === song.src);
+  
+  if (alreadyLiked) {
+    favorites = favorites.filter(f => f.src !== song.src);
+    heart.innerHTML = `<i class="fa-regular fa-heart"></i>`;
+  } else {
+    favorites.push(song);
+    heart.innerHTML = `<i class="fa-solid fa-heart"></i>`;
+  }
+
+  window.favorites = favorites; // ← sync after reassignment
+  updateMiniPlayerHeart();
+
+  const user = window.auth?.currentUser;
+  console.log("Saving favorites:", favorites, "User:", user); // ← debug line
+  if (user) await window.saveFavorites(user.uid);
+});
+
+    // Click card to play
+    card.addEventListener("click", () => loadSong(idx));
+    songCardsContainer.appendChild(card);
+  });
+
+  
+// Search dropdown
+const searchInput = document.getElementById("songSearchInput");
+const searchWrapper = document.querySelector(".song-search");
+searchWrapper.style.position = "relative";
+
+const dropdown = document.createElement("div");
+dropdown.id = "searchDropdown";
+dropdown.style.cssText = `
+  position: absolute;
+  top: 110%;
+  left: 0;
+  width: 100%;
+  background: rgba(0,20,50,0.97);
+  border-radius: 8px;
+  margin-top: 4px;
+  z-index: 999;
+  max-height: 400px;
+  overflow-y: auto;
+  display: none;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.8);
+  border: 1px solid rgba(0,191,255,0.3);
+  backdrop-filter: blur(12px);
+`;
+searchWrapper.appendChild(dropdown);
+
+function renderDropdown(query) {
+  dropdown.innerHTML = "";
+  dropdown.style.display = "block";
+
+  let songs = [];
+  let labelText = "";
+
+  if (!query) {
+    labelText = "Recent searches";
+    songs = recentlyPlayed.slice(0, 6);
+  } else {
+    labelText = "Search results";
+    songs = songsData.filter(s =>
+      s.title.toLowerCase().includes(query) ||
+      s.artist.toLowerCase().includes(query)
+    );
+  }
+
+  const labelRow = document.createElement("div");
+  labelRow.style.cssText = `display:flex;justify-content:space-between;align-items:center;padding:16px 16px 8px 16px;`;
+
+  const label = document.createElement("div");
+  label.style.cssText = "font-size:13px;font-weight:700;color:#fff;";
+  label.textContent = labelText;
+  labelRow.appendChild(label);
+
+  if (!query && recentlyPlayed.length > 0) {
+    const clearBtn = document.createElement("button");
+    clearBtn.textContent = "Clear all";
+    clearBtn.style.cssText = `background:transparent;border:none;color:#b3b3b3;font-size:13px;font-weight:600;cursor:pointer;padding:4px 8px;border-radius:4px;transition:color 0.2s;`;
+    clearBtn.addEventListener("mouseover", () => clearBtn.style.color = "#fff");
+    clearBtn.addEventListener("mouseout", () => clearBtn.style.color = "#b3b3b3");
+    clearBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      recentlyPlayed = [];
+      const user = window.auth?.currentUser;
+      if (user) window.saveRecentlyPlayed(user.uid);
+      dropdown.style.display = "none";
+      renderRecentlyPlayed();
+    });
+    labelRow.appendChild(clearBtn);
+  }
+
+  dropdown.appendChild(labelRow);
+
+  if (songs.length === 0) {
+    const empty = document.createElement("div");
+    empty.style.cssText = "padding:12px 16px;color:#9fdcff;font-size:13px;";
+    empty.textContent = "No songs found.";
+    dropdown.appendChild(empty);
+    return;
+  }
+
+  songs.forEach(song => {
+    const index = songsData.findIndex(s => s.src === song.src);
+    const item = document.createElement("div");
+    item.style.cssText = `display:flex;align-items:center;gap:12px;padding:8px 16px;cursor:pointer;border-radius:4px;transition:background 0.15s;`;
+    item.innerHTML = `
+      <div style="position:relative;width:48px;height:48px;flex-shrink:0;">
+        <img src="${song.img}" style="width:48px;height:48px;border-radius:4px;object-fit:cover;">
+        <div class="item-play-icon" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.7);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.2s;">
+          <i class="fa fa-play" style="font-size:11px;color:#fff;"></i>
+        </div>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:14px;font-weight:500;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${song.title}</div>
+        <div style="font-size:12px;color:#b3b3b3;margin-top:2px;">Song • ${song.artist}</div>
+      </div>
+    `;
+    item.addEventListener("mouseover", () => {
+      item.style.background = "rgba(255,255,255,0.1)";
+      item.querySelector(".item-play-icon").style.opacity = "1";
+    });
+    item.addEventListener("mouseout", () => {
+      item.style.background = "transparent";
+      item.querySelector(".item-play-icon").style.opacity = "0";
+    });
+    item.addEventListener("click", () => {
+      loadSong(index);
+      player.play();
+      dropdown.style.display = "none";
+      searchInput.value = "";
+    });
+    dropdown.appendChild(item);
+  });
+}
+
+searchInput.addEventListener("focus", () => renderDropdown(searchInput.value.toLowerCase()));
+searchInput.addEventListener("input", () => {
+  const q = searchInput.value.toLowerCase();
+  renderDropdown(q);
+  document.querySelectorAll(".card").forEach(card => {
+    const title = card.innerText.toLowerCase();
+    card.style.display = title.includes(q) || !q ? "flex" : "none";
+  });
+});
+document.addEventListener("click", (e) => {
+  if (!searchWrapper.contains(e.target)) dropdown.style.display = "none";
+});
+  renderRecentlyPlayed();
+}
+
+function showArtistPage() {
+  const main = document.getElementById("mainGrid");
+  const artists = [...new Set(songsData.map(song => song.artist))];
+
+  main.innerHTML = `
+    <section class="left-col">
+      <h3 style="color:var(--neon); margin-bottom:10px;">Artists</h3>
+      <div class="song-cards" id="artistCards"></div>
+    </section>
+  `;
+
+  const container = document.getElementById("artistCards");
+
+  artists.forEach(artist => {
+    const card = document.createElement("div");
+    card.className = "card artist-card";
+
+    card.innerHTML = `
+      <img src="${artistImages[artist] || 'artists/default.jpg'}">
+      <h4>${artist}</h4>
+    `;
+
+    // click artist → show songs
+    card.addEventListener("click", () => {
+      showArtistSongs(artist);
+    });
+
+    container.appendChild(card);
+  });
+}
+
+
+function showArtistSongs(artistName) {
+  const main = document.getElementById("mainGrid");
+
+  const artistSongs = songsData.filter(
+    song => song.artist === artistName
+  );
+
+  main.innerHTML = `
+    <section class="left-col">
+      <button id="backToArtists" class="back-button">← Back to Artists</button>
+      <h3 style="color:var(--neon); margin-bottom:10px;">
+        🎤 ${artistName}
+      </h3>
+      <div class="song-cards" id="artistSongCards"></div>
+    </section>
+  `;
+
+  // Add back button functionality
+  document.getElementById("backToArtists").addEventListener("click", () => {
+    showArtistPage();
+  });
+
+  const container = document.getElementById("artistSongCards");
+
+  artistSongs.forEach(song => {
+    const index = songsData.findIndex(s => s.src === song.src);
+
+    const card = document.createElement("div");
+    card.className = "card";
+
+    card.innerHTML = `
+      <img src="${song.img}">
+      <h4>${song.title}</h4>
+    `;
+
+    card.addEventListener("click", () => {
+      loadSong(index);
+      player.play();
+    });
+
+    container.appendChild(card);
+  });
+}
+//recent
+let recentlyPlayed = [];
+function addToRecentlyPlayed(index) {
+  const song = songsData[index];
+  recentlyPlayed = recentlyPlayed.filter(s => s.src !== song.src);
+  recentlyPlayed.unshift(song);
+  // limit to 5 songs
+  if (recentlyPlayed.length >7) {
+    recentlyPlayed.pop();
+  }
+  renderRecentlyPlayed();
+
+
+ const user = window.auth?.currentUser;
+if (user) {
+  window.saveRecentlyPlayed(user.uid);
+}
+}
+function renderRecentlyPlayed() {
+
+  const container = document.getElementById("recentlyPlayedCards");
+  if (!container) return;
+  container.innerHTML = "";
+  recentlyPlayed.forEach(song => {
+    const card = document.createElement("div");
+    card.className = "recently-played-card";
+
+    card.innerHTML = `
+      <img src="${song.img}">
+      <h5>${song.title}</h5>
+    `;
+
+    card.addEventListener("click", () => {
+      const index = songsData.findIndex(s => s.src === song.src);
+      loadSong(index);
+      player.play();
+    });
+
+    container.appendChild(card);
+
+  });
+}
+
+miniPlay.addEventListener('click', ()=>{
+  if(player.paused){
+    player.play();
+    miniPlayIcon.className = 'fa fa-pause';
+  } else {
+    player.pause();
+    miniPlayIcon.className = 'fa fa-play';
+  }
+});
+
+player.addEventListener('play', ()=> miniPlayIcon.className='fa fa-pause');
+player.addEventListener('pause', ()=> miniPlayIcon.className='fa fa-play');
+
+miniPrev.addEventListener('click', ()=> loadSong(currentIndex-1));
+miniNext.addEventListener('click', ()=> loadSong(currentIndex+1));
+
+//repeat
+let isRepeat = false;
+repeatBtn.addEventListener("click", () => {
+  isRepeat = !isRepeat;
+  repeatBtn.classList.toggle("active", isRepeat);
+});
+
+//drag progressline
+miniProgressContainer.addEventListener("click", (e) => {
+  const rect = miniProgressContainer.getBoundingClientRect();
+  const percent = (e.clientX - rect.left) / rect.width;
+  player.currentTime = percent * player.duration;
+});
+miniProgressContainer.addEventListener("touchstart", () => {
+  isSeeking = true;
+});
+
+//mbl drag line
+document.addEventListener("touchmove", (e) => {
+  if (!isSeeking) return;
+  const touch = e.touches[0];
+  const rect = miniProgressContainer.getBoundingClientRect();
+  let percent = (touch.clientX - rect.left) / rect.width;
+  percent = Math.max(0, Math.min(1, percent));
+  player.currentTime = percent * player.duration;
+});
+document.addEventListener("touchend", () => {
+  isSeeking = false;
+});
+
+player.addEventListener('ended', ()=>{ 
+  if (isRepeat) {
+    player.currentTime = 0;
+    player.play();
+  } else {
+    loadSong(currentIndex + 1);
+    player.play();
+  }
+});
+
+function updateProgressBar() {
+  if (player.duration) {
+    const pct = (player.currentTime / player.duration) * 100;
+
+    miniProgressFill.style.width = pct + "%";
+    miniHandle.style.left = pct + "%";
+
+    miniCurrent.textContent = formatTime(player.currentTime);
+  }
+
+  requestAnimationFrame(updateProgressBar);
+}
+
+// START PROGRESS BAR
+requestAnimationFrame(updateProgressBar);
+
+
+player.addEventListener('loadedmetadata', ()=>{
+  miniTotal.textContent = formatTime(player.duration || 0);
+});
+
+function formatTime(t){ if (!t || isNaN(t)) return '0:00'; const m=Math.floor(t/60); const s=Math.floor(t%60); return `${m}:${s<10?'0'+s:s}`; }
+
+// On page load
+showMainPage(); 
+
+//MEDIAPIPE
+const videoElement = document.querySelector('.input_video');
+const canvasElement = document.querySelector('.output_canvas');
+const videoBox = document.getElementById('videoBox');
+const ctx = canvasElement.getContext('2d');
+
+function resizeCanvases(w,h){
+  canvasElement.width = w; canvasElement.height = h;
+}
+window.addEventListener('resize', ()=>{ const r = videoBox.getBoundingClientRect(); resizeCanvases(Math.round(r.width), Math.round(r.height)); });
+setTimeout(()=>{ const r = videoBox.getBoundingClientRect(); resizeCanvases(Math.round(r.width), Math.round(r.height)); },200);
+
+// mediapipe hands + camera wrapper
+const hands = new Hands({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}` });
+hands.setOptions({ maxNumHands:1, modelComplexity:1, minDetectionConfidence:0.7, minTrackingConfidence:0.7 });
+
+let camera = null;
+function createCamera(){
+  if (camera) return camera;
+  camera = new Camera(videoElement, {
+    onFrame: async () => {
+      try { await hands.send({image: videoElement}); } catch(e){ /* ignore */ }
+    },
+    width: 640, height: 480
+  });
+  return camera;
+}
+
+let prevLandmarks = null;
+const SMOOTH_FACTOR = 0.75;
+const smoothLandmarks = (current) => {
+  if (!prevLandmarks) { prevLandmarks = current.map(p=>({...p})); return current; }
+  const out = current.map((p,i)=>(({
+    x: prevLandmarks[i].x*SMOOTH_FACTOR + p.x*(1-SMOOTH_FACTOR),
+    y: prevLandmarks[i].y*SMOOTH_FACTOR + p.y*(1-SMOOTH_FACTOR),
+    z: prevLandmarks[i].z*SMOOTH_FACTOR + p.z*(1-SMOOTH_FACTOR)
+  })));
+  prevLandmarks = out.map(p=>({...p})); return out;
+};
+const distance = (a,b) => Math.sqrt((a.x-b.x)**2 + (a.y-b.y)**2);
+const isFingerUp = (lm, tip, pip) => lm[tip].y < lm[pip].y;
+
+const detectGesture = (lm) => {
+  if (!lm) return null;
+  const index = isFingerUp(lm,8,6);
+  const middle= isFingerUp(lm,12,10);
+  const ring = isFingerUp(lm,16,14);
+  const pinky= isFingerUp(lm,20,18);
+  const handSize = distance(lm[0], lm[9]);
+  const thumbDist = distance(lm[4], lm[9]);
+  const thumbFolded = thumbDist < handSize * 0.35;
+  const thumbExtended = thumbDist > handSize * 0.55;
+  const zDiff = Math.abs(lm[5].z - lm[17].z);
+  const isFront = zDiff < 0.06;
+
+  if (index && middle && ring && pinky && thumbExtended) return { name:"PLAY", emoji:"🖐️" };
+  if (!index && !middle && !ring && !pinky && thumbFolded) return { name:"PAUSE", emoji:"✊" };
+  if (index && middle && !ring && !pinky) return { name:"VOLUME_UP", emoji:"✌️" };
+  if (index && !middle && !ring && !pinky) return { name:"VOLUME_DOWN", emoji:"☝️" };
+  if (!index && !middle && !ring && pinky && !thumbExtended && isFront) return { name:"PREVIOUS", emoji:"🤙" };
+  if (index && !middle && !ring && pinky && !thumbExtended && thumbFolded && isFront) return { name:"NEXT", emoji:"🤘" };
+  return null;
+};
+
+/* buffer + action */
+window.gestureBuffer = [];
+const STABLE_FRAMES_REQUIRED = 5;
+let lastGestureName = null;
+let gestureActive = false;
+let gestureResetTimeout = null;
+
+function performGestureAction(gesture){
+  if (!gesture) return;
+  gestureText.innerText = `Gesture: ${gesture.name} ${gesture.emoji}`;
+
+  if (gestureActive && gesture.name === lastGestureName && (gesture.name === "NEXT" || gesture.name === "PREVIOUS")) return;
+
+  switch(gesture.name){
+    case "PLAY": if (player.paused) player.play(); break;
+    case "PAUSE": if (!player.paused) player.pause(); break;
+    case "VOLUME_UP": setVolume(Math.min(1, volume + 0.01)); break;
+    case "VOLUME_DOWN": setVolume(Math.max(0, volume - 0.01)); break;
+    case "PREVIOUS": loadSong(currentIndex - 1); player.play(); break;
+    case "NEXT": loadSong(currentIndex + 1); player.play(); break;
+  }
+
+  lastGestureName = gesture.name;
+  gestureActive = true;
+  clearTimeout(gestureResetTimeout);
+  gestureResetTimeout = setTimeout(()=>{ gestureText.innerText = "Gesture: Ready"; }, 1100);
+}
+
+/* handle results */
+hands.onResults(results => {
+  const w = canvasElement.width, h = canvasElement.height;
+  ctx.clearRect(0,0,w,h);
+  if (results.image) {
+    ctx.filter = 'brightness(0.03) contrast(1.15)';
+    ctx.drawImage(results.image, 0, 0, w, h);
+    ctx.filter = 'none';
+  }
+
+  if (!window.lastHandVisible) window.lastHandVisible = false;
+  if (!window.handJustAppeared) window.handJustAppeared = false;
+
+  const handVisible = results.multiHandLandmarks && results.multiHandLandmarks.length > 0;
+  if (handVisible && !window.lastHandVisible) {
+    window.handJustAppeared = true;
+    setTimeout(()=> window.handJustAppeared = false, 700);
+  }
+  window.lastHandVisible = handVisible;
+  if (window.handJustAppeared) {
+    if (results.multiHandLandmarks?.[0]) {
+      drawConnectors(ctx, results.multiHandLandmarks[0], HAND_CONNECTIONS, { color: "#777", lineWidth: 2 });
+      drawLandmarks(ctx, results.multiHandLandmarks[0], { color: "#777", lineWidth: 1 });
+    }
+    return;
+  }
+
+  const lm = results.multiHandLandmarks?.[0];
+  if (lm) {
+    const smooth = smoothLandmarks(lm);
+    const gesture = detectGesture(smooth);
+
+    window.gestureBuffer.push(gesture ? gesture.name : null);
+    if (window.gestureBuffer.length > STABLE_FRAMES_REQUIRED) window.gestureBuffer.shift();
+
+    const candidates = window.gestureBuffer.filter(g=>g);
+    const mostCommon = candidates.length ? candidates.sort((a,b)=> candidates.filter(v=>v===a).length - candidates.filter(v=>v===b).length).pop() : null;
+
+    if (gesture && gesture.name === mostCommon && window.gestureBuffer.filter(g=>g===gesture.name).length >= STABLE_FRAMES_REQUIRED - 1) {
+      performGestureAction(gesture);
+      drawConnectors(ctx, smooth, HAND_CONNECTIONS, { color: "#00aaff", lineWidth: 5 });
+      drawLandmarks(ctx, smooth, { color: "#00aaff", lineWidth: 2 });
+      videoElement.style.opacity = 0.9;
+    } else {
+      drawConnectors(ctx, smooth, HAND_CONNECTIONS, { color: "#777", lineWidth: 3 });
+      drawLandmarks(ctx, smooth, { color: "#777", lineWidth: 1 });
+      gestureActive = false;
+      videoElement.style.opacity = 0.14;
+    }
+  } else {
+    videoElement.style.opacity = 0.14;
+    gestureText.innerText = "Gesture: Ready";
+    gestureActive = false;
+  }
+});
+
+
+async function startGestureCamera(){
+  try {
+    createCamera();
+    await camera.start(); // this triggers permission prompt
+    window.gestureBuffer = []; prevLandmarks = null;
+    gestureText.innerText = "Gesture: Ready";
+    videoBox.classList.remove('hidden');
+    const r = videoBox.getBoundingClientRect();
+    resizeCanvases(Math.round(r.width), Math.round(r.height));
+  } catch (err) {
+    console.error('Camera start failed', err);
+    gestureText.innerText = "Gesture: Camera failed";
+    setGestureUI(false);
+  }
+}
+async function stopGestureCamera(){
+  try { camera && camera.stop(); } catch(e) {}
+  camera = null; // allow recreate next time
+  ctx.clearRect(0,0,canvasElement.width,canvasElement.height);
+  gestureText.innerText = "Gesture: Off";
+  videoElement.style.opacity = 0.14;
+  window.gestureBuffer = [];
+  gestureActive = false;
+  videoBox.classList.add('hidden');
+}
+
+
+const gSwitch = document.getElementById('gestureSwitch');
+const gIcon = document.getElementById('gestureIcon');
+let gestureEnabled = false;
+
+function setGestureUI(enabled){
+  gestureEnabled = enabled;
+  gSwitch.classList.toggle('active', enabled);
+  gSwitch.setAttribute('aria-checked', String(enabled));
+  gIcon.style.color = enabled ? 'var(--neon)' : '#fff';
+  // show/hide webcam box
+const gestureText = document.getElementById("gestureText");
+
+if (!enabled) {
+    // Hide webcam + text
+    videoBox.classList.remove('show');
+    videoBox.classList.add('hidden');
+    gestureText.classList.remove('show');
+
+    document.body.classList.remove("camera-open");
+} else {
+    // Show webcam + text
+    videoBox.classList.remove('hidden');
+    videoBox.classList.add('show');
+    gestureText.classList.add('show');
+
+    document.body.classList.add("camera-open");
+}
+}
+
+gSwitch.addEventListener('click', async ()=> {
+  const newState = !gestureEnabled;
+  setGestureUI(newState);
+  if (newState) {
+    await startGestureCamera();
+  } else {
+    await stopGestureCamera();
+  }
+});
+gSwitch.addEventListener('keydown', async (e)=> {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); gSwitch.click(); }
+});
+
+// init - webcam hidden by default
+setGestureUI(false);
+
+/* helpers */
+function setVolume(v){ 
+  volume = Math.max(0, Math.min(1, v)); 
+  player.volume = volume; 
+  miniVolume.value = volume; // update slider to match gesture
+}
+document.addEventListener('keydown', (e)=>{
+  const activeEl = document.activeElement;
+
+  if (activeEl.tagName === "INPUT" || activeEl.tagName === "TEXTAREA") {
+    return;
+  }
+
+  if (e.code === 'Space') {
+    e.preventDefault();
+    togglePlayPause();
+  }
+
+  if (e.code === 'ArrowRight') {
+    loadSong(currentIndex + 1);
+    player.play();
+  }
+
+  if (e.code === 'ArrowLeft') {
+    loadSong(currentIndex - 1);
+    player.play();
+  }
+});
+
+
+/* release camera on unload */
+window.addEventListener('beforeunload', ()=>{ try { camera && camera.stop(); } catch(e){} });
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  sidebar.classList.toggle('collapsed');
+
+  // Update gesture toggle if sidebar is collapsed
+  const gestureIcon = document.getElementById('gestureIcon');
+  const gestureSwitch = document.getElementById('gestureSwitch');
+  
+
+  if(sidebar.classList.contains('collapsed')){
+    // Sidebar closed: hide gesture text
+    gestureIcon.style.color = '#fff';
+    gestureSwitch.style.display = 'none';
+  } else {
+    // Sidebar open: show gesture text
+    gestureSwitch.style.display = 'block';
+    if(gestureEnabled) gestureIcon.style.color = 'var(--neon)';
+  }
+}
+//VOICE
+const voiceSwitch = document.getElementById('voiceSwitch');
+const voiceIcon = document.getElementById('voiceIcon');
+
+let voiceEnabled = false;
+let recognition = null;
+let isListening = false;
+
+let voiceHint = document.getElementById("voiceHint");
+if (!voiceHint) {
+  voiceHint = document.createElement("div");
+  voiceHint.id = "voiceHint";
+  voiceHint.style.position = "fixed";
+  voiceHint.style.bottom = "90px";
+  voiceHint.style.right = "30px";
+  voiceHint.style.background = "rgba(0,0,0,0.8)";
+  voiceHint.style.color = "#9fdcff";
+  voiceHint.style.padding = "8px 14px";
+  voiceHint.style.borderRadius = "8px";
+  voiceHint.style.fontSize = "14px";
+  voiceHint.style.opacity = "0";
+  voiceHint.style.pointerEvents = "none";
+  voiceHint.style.transition = "opacity 0.3s ease";
+  voiceHint.style.zIndex = "9999";
+  voiceHint.innerText = "🎤 Voice paused — tap mic to speak again";
+  document.body.appendChild(voiceHint);
+}
+
+function showVoiceHint() {
+  voiceHint.style.opacity = "1";
+  voiceHint.style.pointerEvents = "auto";
+  setTimeout(() => {
+    voiceHint.style.opacity = "0";
+    voiceHint.style.pointerEvents = "none";
+  }, 2500);
+}
+
+function setVoiceListening(active) {
+  if (!voiceIcon) return;
+  if (active) {
+    voiceIcon.style.color = "var(--neon)";
+    voiceIcon.style.textShadow = "0 0 8px var(--neon)";
+  } else {
+    voiceIcon.style.color = "#fff";
+    voiceIcon.style.textShadow = "none";
+  }
+}
+
+function startVoiceRecognition() {
+  if (isListening || !voiceEnabled) return;
+
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    alert("Voice recognition not supported");
+    return;
+  }
+
+  recognition = new SpeechRecognition();
+  recognition.continuous = true;
+  recognition.interimResults = false;
+  recognition.lang = "en-US";
+  recognition.maxAlternatives = 1;
+
+
+  recognition.onstart = () => {
+    isListening = true;
+    setVoiceListening(true);
+    console.log("🎙️ Voice listening...");
+  };
+
+  recognition.onresult = (event) => {
+  const last = event.results.length - 1;
+  const text = event.results[last][0].transcript.trim().toLowerCase();
+  console.log("🗣️ Heard:", text);
+
+if (/\bplay\b/.test(text)) { player.play(); miniPlayIcon.className="fa fa-pause"; }
+else if (/\b(pause|stop)\b/.test(text)) { player.pause(); miniPlayIcon.className="fa fa-play"; }
+else if (/\b(next|skip)\b/.test(text)) { loadSong((currentIndex+1)%songsData.length); player.play(); }
+else if (/\b(previous|back)\b/.test(text)) { loadSong((currentIndex-1+songsData.length)%songsData.length); player.play(); }
+else if (/\b(volume up|up|increase|louder)\b/.test(text)) { setVolume(player.volume+0.1); }
+else if (/\b(volume down|down|decrease|lower)\b/.test(text)) { setVolume(player.volume-0.1); }
+};
+  recognition.onerror = (e) => {
+    console.warn("Voice error:", e.error);
+  };
+  recognition.onend = () => {
+    isListening = false;
+    setVoiceListening(false);
+    console.log("🎤 Voice stopped");
+    if (voiceEnabled) showVoiceHint();
+  };
+  recognition.start();
+}
+
+function stopVoiceRecognition() {
+  voiceEnabled = false;
+  isListening = false;
+  if (recognition) {
+    recognition.onend = null;
+    recognition.stop();
+    recognition = null;
+  }
+  setVoiceListening(false);
+}
+
+// Toggle voice
+function setVoiceUI(enabled) {
+  voiceEnabled = enabled;
+  voiceSwitch.classList.toggle("active", enabled);
+  voiceSwitch.setAttribute("aria-checked", String(enabled));
+  voiceIcon.style.color = enabled ? "var(--neon)" : "#fff";
+
+  if (enabled) startVoiceRecognition();
+  else stopVoiceRecognition();
+}
+
+// Click / key handling
+voiceSwitch.addEventListener('click', () => setVoiceUI(!voiceEnabled));
+voiceSwitch.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); voiceSwitch.click(); }
+});
+
+// Allow user to tap the mic icon to restart
+voiceIcon.addEventListener('click', () => {
+  if (!isListening && voiceEnabled) startVoiceRecognition();
+});
+
+function showFavoritesPage() {
+  const main = document.getElementById("mainGrid");
+
+  // Clear main area
+  main.innerHTML = `
+    <section class="left-col">
+      <h3 style="margin:0 0 10px 0; color:var(--neon)">Favorites</h3>
+      <div class="song-cards" id="favoriteCards"></div>
+    </section>
+  `;
+
+  const favCardsContainer = document.getElementById("favoriteCards");
+
+  if (favorites.length === 0) {
+    favCardsContainer.innerHTML = `<p style="color:#9fdcff;">No favorite songs yet.</p>`;
+    return;
+  }
+
+  favorites.forEach((song, idx) => {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.dataset.index = idx;
+    card.innerHTML = `<img src="${song.img}" alt=""><h4>${song.title} — ${song.artist}</h4>`;
+
+    // Play overlay
+    const overlay = document.createElement("div");
+    overlay.className = "card-play-overlay";
+    overlay.innerHTML = `<i class="fa fa-play"></i>`;
+    card.appendChild(overlay);
+    overlay.addEventListener("click", e => { e.stopPropagation(); 
+        const songIndex = songsData.findIndex(s => s.src === song.src);
+        loadSong(songIndex); 
+        player.play();
+    });
+
+    // Heart button (to remove from favorites)
+    const heart = document.createElement("div");
+    heart.className = "card-heart";
+    heart.innerHTML = `<i class="fa-solid fa-heart"></i>`;
+    card.appendChild(heart);
+    heart.addEventListener("click", async e => {
+  e.stopPropagation();
+
+  // Remove song from favorites
+  favorites = favorites.filter(f => f.src !== song.src);
+
+  // Save to Firestore
+  const user = auth.currentUser;  
+ if (user) await window.saveFavorites(user.uid);
+  // Refresh view
+  showFavoritesPage();
+});
+
+    // Click card to play
+    card.addEventListener("click", () => {
+      const songIndex = songsData.findIndex(s => s.src === song.src);
+      loadSong(songIndex);
+      player.play();
+    });
+
+    favCardsContainer.appendChild(card);
+  });
+}
+
+document.getElementById("homeLink").addEventListener("click", () => {
+  settingsPage.classList.add("hidden"); 
+  mainGrid.classList.remove("hidden"); 
+  showMainPage();                       
+});
+
+document.getElementById("artistLink").addEventListener("click", () => {
+  settingsPage.classList.add("hidden");
+  mainGrid.classList.remove("hidden");
+  showArtistPage();
+});
+
+document.getElementById("favoriteLink").addEventListener("click", () => {
+  settingsPage.classList.add("hidden");
+  mainGrid.classList.remove("hidden");
+  showFavoritesPage();
+});
+
+const settingsLink = document.getElementById("settingsLink");
+const mainGrid = document.getElementById("mainGrid");
+const settingsPage = document.getElementById("settingsPage");
+let isSettingsOpen = false;
+
+settingsLink.addEventListener("click", (e) => {
+  e.preventDefault();
+  const isHidden = settingsPage.classList.contains("hidden");
+
+  if (isHidden) {
+    mainGrid.classList.add("hidden");
+    settingsPage.classList.remove("hidden");
+  } else {
+    settingsPage.classList.add("hidden");
+    mainGrid.classList.remove("hidden");
+  }
+});
+// SETTINGS TOGGLE FOR GESTURE
+const settingsGestureToggle = document.getElementById('settingsGestureToggle');
+settingsGestureToggle.checked = gestureEnabled;
+
+settingsGestureToggle.addEventListener('change', async () => {
+    const newState = settingsGestureToggle.checked;
+
+    // Start or stop gesture UI
+    setGestureUI(newState);
+
+    // Sync sidebar toggle
+    gSwitch.classList.toggle('active', newState);
+    gSwitch.setAttribute('aria-checked', newState);
+    gIcon.style.color = newState ? 'var(--neon)' : '#fff';
+
+    if (newState) {
+        // open webcam
+        await startGestureCamera();
+    } else {
+        // close webcam
+        await stopGestureCamera();
+    }
+});
+// SETTINGS TOGGLE FOR VOICE
+const settingsVoiceToggle = document.getElementById('settingsVoiceToggle');
+
+// initialize state
+settingsVoiceToggle.checked = voiceEnabled;
+
+settingsVoiceToggle.addEventListener('change', () => {
+    const newState = settingsVoiceToggle.checked;
+
+    // Start or stop voice UI
+    setVoiceUI(newState);
+
+    // Sync sidebar toggle
+    voiceSwitch.classList.toggle('active', newState);
+    voiceSwitch.setAttribute('aria-checked', newState);
+    voiceIcon.style.color = newState ? 'var(--neon)' : '#fff';
+});
+
+//THEME TOGGLE
+const themeRadios = document.querySelectorAll('input[name="theme"]');
+
+const savedTheme = localStorage.getItem("theme") || "dark";
+applyTheme(savedTheme);
+
+// set correct radio checked
+themeRadios.forEach(radio => {
+  radio.checked = radio.value === savedTheme;
+});
+
+themeRadios.forEach(radio => {
+  radio.addEventListener("change", () => {
+    applyTheme(radio.value);
+    localStorage.setItem("theme", radio.value);
+  });
+});
+
+function applyTheme(theme) {
+  if (theme === "light") {
+    document.body.classList.add("light-theme");
+  } else {
+    document.body.classList.remove("light-theme");
+  }
+}
+
+</script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAzcLKYLn_K6nHsgfHdjfnHWInhHbwvGHA",
+    authDomain: "gestonix-dd8ae.firebaseapp.com",
+    projectId: "gestonix-dd8ae",
+    storageBucket: "gestonix-dd8ae.firebasestorage.app",
+    messagingSenderId: "536766436923",
+    appId: "1:536766436923:web:945f6c5f7b9ed6b1f56e1e"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+window.auth = auth;
+window.db = db;
+
+//recent
+  async function loadRecentlyPlayed(userId) {
+  try {
+    const ref = doc(db, "users", userId);
+    const snap = await getDoc(ref);
+
+    if (snap.exists()) {
+      const data = snap.data();
+      recentlyPlayed = data.recentlyPlayed || [];
+    }
+
+    renderRecentlyPlayed();
+  } catch (err) {
+    console.error("Error loading recently played:", err);
+  }
+}
+
+async function saveRecentlyPlayed(userId) {
+  try {
+    await setDoc(doc(db, "users", userId), {
+      recentlyPlayed: recentlyPlayed
+    }, { merge: true });
+  } catch (err) {
+    console.error("Error saving recently played:", err);
+  }
+}
+ window.saveRecentlyPlayed = saveRecentlyPlayed;
+  let authChecked = false;
+
+//fav
+window.saveFavorites = async function(userId) {
+  try {
+    const ref = doc(db, "users", userId);
+    window.favorites = favorites;
+
+await setDoc(ref, {
+  favorites:favorites
+}, { merge: true });
+
+  } catch (err) {
+    console.error("Error saving favorites:", err);
+  }
+}
+window.loadFavorites = async function(userId) {
+  try {
+    const ref = doc(db, "users", userId);
+    const snap = await getDoc(ref);
+
+    if (snap.exists()) {
+      const data = snap.data();
+      favorites = data.favorites || [];
+    }
+
+    updateMiniPlayerHeart();
+    showMainPage();
+
+  } catch (err) {
+    console.error("Error loading favorites:", err);
+  }
+}
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    window.location.replace("login.html");
+  } else {
+   await setDoc(doc(db, "users", user.uid), {
+      email: user.email,
+      lastLogin: new Date().toISOString()
+    }, { merge: true });
+
+    await loadRecentlyPlayed(user.uid);
+    await loadFavorites(user.uid);
+    document.getElementById("favBtn").addEventListener("click", async () => {
+  const song = songsData[currentIndex];
+  if (!song) return;
+
+  const exists = favorites.find(f => f.src === song.src);
+
+  if (exists) {
+    favorites = favorites.filter(f => f.src !== song.src);
+  } else {
+    favorites.push(song);
+  }
+
+  updateMiniPlayerHeart();
+
+  const user = auth.currentUser;
+  if (user) {
+    await saveFavorites(user.uid);
+  }
+});
+    updateMiniPlayerHeart();
+  }
+});
+
+  // LOGOUT
+  const logoutBtn = document.getElementById("logoutBtn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      signOut(auth).then(() => {
+        window.location.replace("login.html");
+      });
+    });
+  }
+
+</script>
+</body>
+</html>
